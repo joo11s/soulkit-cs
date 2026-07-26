@@ -468,6 +468,47 @@
   .ch-dot-11st { background: #FF5100; }
   .ch-dot-lotteon { background: #E50E3E; }
   .ch-dot-esm { background: #8B6FBE; }
+
+  /* ── SUB-TABS ── */
+  .subtab-bar {
+    display: flex;
+    gap: 0;
+    padding: 0 24px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .subtab {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+    margin-bottom: -1px;
+  }
+  .subtab:hover { color: var(--text-main); }
+  .subtab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent-strong);
+  }
+
+  /* ── REVIEW NOTICE (리뷰 탭 하단) ── */
+  .review-notice {
+    margin: 12px 0 0;
+    padding: 10px 14px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 10px;
+    color: var(--text-sub);
+    line-height: 1.7;
+  }
+  .review-notice strong { color: var(--text-main); }
 </style>
 </head>
 <body>
@@ -507,6 +548,12 @@
   </div>
 </div>
 
+<!-- SUB-TABS -->
+<div class="subtab-bar">
+  <button class="subtab active" data-subtab="qna" onclick="switchSubtab('qna')">상품 Q&amp;A</button>
+  <button class="subtab" data-subtab="review" onclick="switchSubtab('review')">상품 리뷰</button>
+</div>
+
 <!-- INBOX TABLE -->
 <div class="table-wrap">
   <table id="inboxTable">
@@ -525,16 +572,12 @@
     </tbody>
   </table>
   <div class="empty-note" id="emptyNote" style="display:none">조건에 맞는 항목이 없습니다.</div>
-</div>
-
-<!-- FOOTER NOTICE -->
-<div class="footer-notice">
-  <p>
+  <div class="review-notice" id="reviewNotice" style="display:none">
     <strong>리뷰 조회 불가 채널 안내</strong> ·
     네이버 스마트스토어 / 롯데온 / 지마켓·옥션(ESM)의 리뷰는 <strong>공식 API가 제공되지 않아</strong> 이 화면에서 조회 및 답변이 불가능합니다.
     해당 채널 리뷰는 각 판매자센터에서 직접 확인해 주세요.
-    쿠팡 리뷰는 수집은 되나 API 답변 기능이 없어 "마켓에서 확인" 링크로만 제공됩니다.
-  </p>
+    쿠팡 리뷰는 카페24를 통해 수집되며 API 답변 기능이 없어 "마켓에서 확인" 링크로만 제공됩니다.
+  </div>
 </div>
 
 <!-- SLIDE PANEL -->
@@ -643,6 +686,18 @@ const INBOX_DATA = [
     marketUrl: 'https://wing.coupang.com/seller/reviews',
   },
   {
+    id: 'c004',
+    channel: 'coupang',
+    type: 'cs',
+    product: '[에센셜 라인] 탄력 크림 50ml',
+    preview: '제품 뚜껑이 불량이라 내용물이 새고 있어요. 환불 처리 가능한가요?',
+    fullText: '안녕하세요, 구매한 제품에 불량이 있어서 문의드립니다.\n뚜껑이 제대로 닫히지 않아 내용물이 새고 있습니다.\n환불 처리가 가능한지 확인 부탁드립니다.',
+    date: '2026-07-26',
+    status: 'pending',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
     id: 'e001',
     channel: '11st',
     type: 'qna',
@@ -744,6 +799,7 @@ const CHANNEL_CONFIG = {
 // ─────────────────────────────────────────────
 let activeChannel = 'all';
 let activeStatus = 'all';
+let activeSubtab = 'qna'; // 'qna' | 'review'
 let currentItemId = null;
 let inboxData = JSON.parse(JSON.stringify(INBOX_DATA)); // 로컬 상태 복사
 
@@ -767,7 +823,7 @@ function renderChannelCards() {
   const cardsHTML = channels.map(ch => {
     const cfg = CHANNEL_CONFIG[ch];
     const items = inboxData.filter(i => i.channel === ch);
-    const pending = items.filter(i => i.status === 'pending' && i.type === 'qna').length;
+    const pending = items.filter(i => i.status === 'pending' && (i.type === 'qna' || i.type === 'cs')).length;
     totalPending += pending;
 
     let reviewHTML = '';
@@ -861,6 +917,9 @@ function getFilteredData() {
     if (activeChannel !== 'all' && item.channel !== activeChannel) return false;
     if (activeStatus === 'pending' && item.status !== 'pending') return false;
     if (activeStatus === 'replied' && item.status !== 'replied') return false;
+    // 서브탭 필터: Q&A탭 = qna+cs, 리뷰탭 = review
+    if (activeSubtab === 'qna' && item.type === 'review') return false;
+    if (activeSubtab === 'review' && item.type !== 'review') return false;
     return true;
   });
 }
@@ -869,7 +928,11 @@ function renderTable() {
   const data = getFilteredData();
   const tbody = document.getElementById('inboxBody');
   const emptyNote = document.getElementById('emptyNote');
+  const reviewNotice = document.getElementById('reviewNotice');
   const filterCount = document.getElementById('filterCount').querySelector('span');
+
+  // 리뷰 탭 안내문 표시 여부
+  reviewNotice.style.display = activeSubtab === 'review' ? 'block' : 'none';
 
   filterCount.textContent = data.length;
 
@@ -1026,6 +1089,17 @@ function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ─────────────────────────────────────────────
+// SUB-TAB
+// ─────────────────────────────────────────────
+function switchSubtab(tab) {
+  activeSubtab = tab;
+  document.querySelectorAll('.subtab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.subtab === tab);
+  });
+  renderTable();
 }
 
 // ─────────────────────────────────────────────
