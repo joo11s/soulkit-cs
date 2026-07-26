@@ -512,6 +512,48 @@
     gap: 8px;
   }
 
+  /* ── BUSINESS SELECTOR + REFRESH BUTTON ── */
+  .business-select {
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-surface);
+    color: var(--accent);
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .15s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23f5e6c8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 26px;
+  }
+  .business-select:hover, .business-select:focus { border-color: var(--accent-strong); }
+  .btn-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-surface);
+    color: var(--text-sub);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-refresh:hover { border-color: var(--accent-strong); color: var(--text-main); }
+  .btn-refresh.spinning { pointer-events: none; opacity: .7; }
+  .btn-refresh .refresh-icon { display: inline-block; transition: transform .5s; }
+  .btn-refresh.spinning .refresh-icon { animation: spin .5s linear 1; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
   /* ── REVIEW NOTICE (리뷰 탭 하단) ── */
   .review-notice {
     margin: 12px 0 0;
@@ -535,6 +577,15 @@
     <span class="badge urgent" id="totalBadge">미답변 0건</span>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
+    <select class="business-select" id="businessFilter" onchange="onBusinessChange(this.value)">
+      <option value="all">전체</option>
+      <option value="소울스토어">소울스토어</option>
+      <option value="제이원투몰">제이원투몰</option>
+      <option value="행복산업">행복산업</option>
+    </select>
+    <button class="btn-refresh" id="btnRefresh" onclick="refreshData()">
+      <span class="refresh-icon">↻</span> 새로고침
+    </button>
     <span class="badge" style="font-size:10px; color:var(--text-sub)">Mock 데이터 · API 연동 예정</span>
     <a href="https://www.myip.com" target="_blank" rel="noopener"
        style="font-size:11px;padding:3px 10px;border:1px solid #f5e6c8;color:#f5e6c8;background:transparent;border-radius:4px;text-decoration:none;cursor:pointer;letter-spacing:0.02em;opacity:0.85;transition:opacity .15s"
@@ -638,6 +689,7 @@ const INBOX_DATA = [
     id: 'n001',
     channel: 'naver',
     type: 'qna',
+    business: '소울스토어',
     product: '[에센셜 라인] 탄력 크림 50ml',
     preview: '배송이 언제 오나요? 주문한 지 3일이 지났는데 아직 발송 전이에요.',
     fullText: '안녕하세요, 배송이 언제 오나요?\n주문한 지 3일이 지났는데 아직 발송 전 상태입니다.\n내일까지 받을 수 있을까요? 급하게 필요해서요.',
@@ -650,6 +702,7 @@ const INBOX_DATA = [
     id: 'n002',
     channel: 'naver',
     type: 'qna',
+    business: '제이원투몰',
     product: '[베이직] 히알루론산 세럼 30ml',
     preview: '민감성 피부인데 사용 가능한가요? 알러지 성분이 있는지 궁금합니다.',
     fullText: '안녕하세요!\n저는 민감성 피부인데 이 제품 사용해도 괜찮을까요?\n알러지 유발 성분이 있는지 궁금하고, 피부과 테스트 완료 제품인지도 알고 싶어요.',
@@ -662,6 +715,7 @@ const INBOX_DATA = [
     id: 'c001',
     channel: 'coupang',
     type: 'qna',
+    business: '소울스토어',
     product: '[썬케어] SPF50+ 선크림 60g',
     preview: '로켓배송인데 오늘 주문하면 내일 받을 수 있나요?',
     fullText: '안녕하세요, 로켓배송으로 되어 있는데 오늘 오후 1시에 주문하면 내일 받을 수 있나요? 내일 야외 행사가 있어서 꼭 필요합니다.',
@@ -674,6 +728,7 @@ const INBOX_DATA = [
     id: 'c002',
     channel: 'coupang',
     type: 'review',
+    business: '행복산업',
     product: '[에센셜 라인] 탄력 크림 50ml',
     preview: '발림성이 너무 좋아요. 근데 향이 조금 강한 것 같아서 아쉽네요. ★★★★',
     fullText: '발림성이 너무 좋아요. 흡수도 빠르고 촉촉함이 오래 가서 만족합니다.\n근데 향이 조금 강한 것 같아서 아쉽네요. 무향 버전도 나왔으면 좋겠어요. ★★★★',
@@ -686,6 +741,7 @@ const INBOX_DATA = [
     id: 'c003',
     channel: 'coupang',
     type: 'review',
+    business: '소울스토어',
     product: '[베이직] 히알루론산 세럼 30ml',
     preview: '재구매 의사 있어요. 가성비 최고입니다. ★★★★★',
     fullText: '재구매 의사 있어요. 가성비 최고입니다.\n피부가 확실히 촉촉해진 느낌이고, 자극도 없어서 민감성 피부에도 좋을 것 같아요. ★★★★★',
@@ -698,6 +754,7 @@ const INBOX_DATA = [
     id: 'c004',
     channel: 'coupang',
     type: 'cs',
+    business: '제이원투몰',
     product: '[에센셜 라인] 탄력 크림 50ml',
     preview: '제품 뚜껑이 불량이라 내용물이 새고 있어요. 환불 처리 가능한가요?',
     fullText: '안녕하세요, 구매한 제품에 불량이 있어서 문의드립니다.\n뚜껑이 제대로 닫히지 않아 내용물이 새고 있습니다.\n환불 처리가 가능한지 확인 부탁드립니다.',
@@ -710,6 +767,7 @@ const INBOX_DATA = [
     id: 'e001',
     channel: '11st',
     type: 'qna',
+    business: '행복산업',
     product: '[프리미엄] 레티놀 나이트 크림 50ml',
     preview: '레티놀 농도가 얼마나 되나요? 피부 자극이 걱정되는데요.',
     fullText: '레티놀 농도가 얼마나 되나요?\n피부 자극이 걱정되는데, 초보자도 사용할 수 있는 낮은 농도인가요?\n적응 기간도 얼마나 걸리는지 알려주세요.',
@@ -722,6 +780,7 @@ const INBOX_DATA = [
     id: 'e002',
     channel: '11st',
     type: 'review',
+    business: '소울스토어',
     product: '[썬케어] SPF50+ 선크림 60g',
     preview: '백탁 없이 발려서 좋아요! 리뷰: 매일 바르고 있어요. ★★★★★',
     fullText: '백탁 없이 발려서 좋아요! 매일 바르고 있어요.\n기름기도 없고 보송보송한 마무리감이 마음에 들어요.\n자외선 차단력도 믿음직스럽고 재구매할 예정입니다. ★★★★★',
@@ -734,6 +793,7 @@ const INBOX_DATA = [
     id: 'e003',
     channel: '11st',
     type: 'review',
+    business: '제이원투몰',
     product: '[에센셜 라인] 탄력 크림 50ml',
     preview: '배송 빠르고 제품도 만족해요. 선물용으로 사기도 좋을 것 같아요. ★★★★',
     fullText: '배송 빠르고 제품도 만족해요.\n선물용으로 사기도 좋을 것 같아요.\n포장도 깔끔하고 용량 대비 가격도 적당한 것 같습니다. ★★★★',
@@ -746,6 +806,7 @@ const INBOX_DATA = [
     id: 'l001',
     channel: 'lotteon',
     type: 'qna',
+    business: '행복산업',
     product: '[프리미엄] 레티놀 나이트 크림 50ml',
     preview: '유통기한이 얼마나 되나요? 장기 구매할 예정이라서요.',
     fullText: '유통기한이 얼마나 되나요?\n여러 개 사두려고 하는데, 장기 보관해도 성분이 변하지 않는지 궁금합니다.\n냉장 보관해야 하나요?',
@@ -758,6 +819,7 @@ const INBOX_DATA = [
     id: 'l002',
     channel: 'lotteon',
     type: 'qna',
+    business: '소울스토어',
     product: '[베이직] 히알루론산 세럼 30ml',
     preview: '쿠폰 중복 적용이 되나요? 이번 주 행사 중이던데 확인 부탁드립니다.',
     fullText: '쿠폰 중복 적용이 되나요?\n지금 롯데온 할인 행사 중이던데, 추가 쿠폰도 함께 사용할 수 있는지 확인 부탁드립니다.',
@@ -770,6 +832,7 @@ const INBOX_DATA = [
     id: 'm001',
     channel: 'esm',
     type: 'qna',
+    business: '제이원투몰',
     product: '[썬케어] SPF50+ 선크림 60g',
     preview: '지마켓 옥션 동시 주문인데 각각 배송되나요? 합배송 가능한지요.',
     fullText: '지마켓과 옥션에 각각 주문했는데 합배송이 가능한가요?\n배송비 두 번 내야 하는지 궁금합니다. 같은 셀러 상품이라서 여쭤봐요.',
@@ -782,6 +845,7 @@ const INBOX_DATA = [
     id: 'm002',
     channel: 'esm',
     type: 'qna',
+    business: '행복산업',
     product: '[에센셜 라인] 탄력 크림 50ml',
     preview: '색상이 여러 개인가요? 사진 속 제품이 실물과 차이가 있는지 궁금해요.',
     fullText: '색상이 여러 개인가요?\n상품 사진 속 제품이 실물과 많이 차이가 있는지 궁금해요.\n화이트와 핑크 두 가지로 보이는데, 차이점을 알려주세요.',
@@ -807,6 +871,7 @@ const CHANNEL_CONFIG = {
 // STATE
 // ─────────────────────────────────────────────
 let activeChannel = 'all';
+let activeBusiness = 'all'; // '전체' | '소울스토어' | '제이원투몰' | '행복산업'
 let qnaStatus = 'all';
 let reviewStatus = 'all';
 let activeSubtab = 'qna'; // 'qna' | 'review'
@@ -928,6 +993,7 @@ function getFilteredData() {
   const status = activeSubtab === 'qna' ? qnaStatus : reviewStatus;
   return inboxData.filter(item => {
     if (activeChannel !== 'all' && item.channel !== activeChannel) return false;
+    if (activeBusiness !== 'all' && item.business !== activeBusiness) return false;
     if (status === 'pending' && item.status !== 'pending') return false;
     if (status === 'replied' && item.status !== 'replied') return false;
     // 서브탭 필터: Q&A탭 = qna+cs, 리뷰탭 = review
@@ -1118,6 +1184,41 @@ function switchSubtab(tab) {
     b.classList.toggle('active', b.dataset.status === currentStatus);
   });
   renderTable();
+}
+
+// ─────────────────────────────────────────────
+// BUSINESS FILTER
+// ─────────────────────────────────────────────
+function onBusinessChange(value) {
+  activeBusiness = value;
+  renderChannelCards();
+  renderTable();
+}
+
+// ─────────────────────────────────────────────
+// DATA LOAD (swap this for a real API call later)
+// 실제 연동 시 fetch(URL).then(res => res.json()) 로 교체
+// ─────────────────────────────────────────────
+function loadData() {
+  // Mock: return a deep copy of INBOX_DATA
+  // Real API example:
+  //   return fetch('/api/inbox').then(res => res.json());
+  return Promise.resolve(JSON.parse(JSON.stringify(INBOX_DATA)));
+}
+
+// ─────────────────────────────────────────────
+// REFRESH
+// ─────────────────────────────────────────────
+function refreshData() {
+  const btn = document.getElementById('btnRefresh');
+  btn.classList.add('spinning');
+  loadData().then(data => {
+    inboxData = data;
+    renderChannelCards();
+    renderTable();
+    btn.classList.remove('spinning');
+    showToast('데이터를 새로 불러왔습니다.');
+  });
 }
 
 // ─────────────────────────────────────────────
