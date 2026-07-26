@@ -583,9 +583,9 @@
   <div class="empty-note" id="emptyNote" style="display:none">조건에 맞는 항목이 없습니다.</div>
   <div class="review-notice" id="reviewNotice" style="display:none">
     <strong>리뷰 조회 불가 채널 안내</strong> ·
-    네이버 스마트스토어 / 롯데온 / 지마켓·옥션(ESM)의 리뷰는 <strong>공식 API가 제공되지 않아</strong> 이 화면에서 조회 및 답변이 불가능합니다.
+    네이버 스마트스토어 / 롯데온 / 지마켓·옥션(ESM)의 리뷰는 <strong>공식 API가 제공되지 않아</strong> 이 화면에서 조회 및 답변이 불가합니다.
     해당 채널 리뷰는 각 판매자센터에서 직접 확인해 주세요.
-    쿠팡 리뷰는 카페24를 통해 수집되며 API 답변 기능이 없어 "마켓에서 확인" 링크로만 제공됩니다.
+    쿠팡·11번가 리뷰는 카페24를 통해 수집되며 API 답변 기능이 없어 "마켓에서 확인" 링크로만 제공됩니다.
   </div>
 </div>
 
@@ -727,8 +727,8 @@ const INBOX_DATA = [
     fullText: '백탁 없이 발려서 좋아요! 매일 바르고 있어요.\n기름기도 없고 보송보송한 마무리감이 마음에 들어요.\n자외선 차단력도 믿음직스럽고 재구매할 예정입니다. ★★★★★',
     date: '2026-07-24',
     status: 'pending',
-    canReply: true,
-    marketUrl: null,
+    canReply: false,
+    marketUrl: 'https://soffice.11st.co.kr/product/SellerProductReviewList.tmall',
   },
   {
     id: 'e003',
@@ -739,8 +739,8 @@ const INBOX_DATA = [
     fullText: '배송 빠르고 제품도 만족해요.\n선물용으로 사기도 좋을 것 같아요.\n포장도 깔끔하고 용량 대비 가격도 적당한 것 같습니다. ★★★★',
     date: '2026-07-23',
     status: 'pending',
-    canReply: true,
-    marketUrl: null,
+    canReply: false,
+    marketUrl: 'https://soffice.11st.co.kr/product/SellerProductReviewList.tmall',
   },
   {
     id: 'l001',
@@ -798,7 +798,7 @@ const INBOX_DATA = [
 const CHANNEL_CONFIG = {
   naver:   { label: '네이버',      dotClass: 'ch-dot-naver',   pillClass: 'ch-naver',   hasReview: false },
   coupang: { label: '쿠팡',        dotClass: 'ch-dot-coupang', pillClass: 'ch-coupang', hasReview: true, reviewMode: 'collect-only' },
-  '11st':  { label: '11번가',      dotClass: 'ch-dot-11st',    pillClass: 'ch-11st',    hasReview: true, reviewMode: 'full' },
+  '11st':  { label: '11번가',      dotClass: 'ch-dot-11st',    pillClass: 'ch-11st',    hasReview: true, reviewMode: 'collect-only' },
   lotteon: { label: '롯데온',      dotClass: 'ch-dot-lotteon', pillClass: 'ch-lotteon', hasReview: false },
   esm:     { label: '지마켓·옥션', dotClass: 'ch-dot-esm',     pillClass: 'ch-esm',     hasReview: false },
 };
