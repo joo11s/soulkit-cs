@@ -470,14 +470,22 @@
   .ch-dot-lotteon { background: #E50E3E; }
   .ch-dot-esm { background: #8B6FBE; }
 
-  /* ── SUB-TABS ── */
+  /* ── SUB-TABS + FILTER BAR (one row) ── */
   .subtab-bar {
     display: flex;
-    gap: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
     padding: 0 24px;
     background: var(--bg-panel);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
+    min-height: 42px;
+  }
+  .subtab-group {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
   }
   .subtab {
     font-size: 12px;
@@ -496,6 +504,12 @@
   .subtab.active {
     color: var(--accent);
     border-bottom-color: var(--accent-strong);
+  }
+  .subtab-filter-group {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   /* ── REVIEW NOTICE (리뷰 탭 하단) ── */
@@ -528,31 +542,19 @@
   <!-- JS로 렌더 -->
 </div>
 
-<!-- SUB-TABS -->
+<!-- SUB-TABS + FILTER BUTTONS (one row) -->
 <div class="subtab-bar">
-  <button class="subtab active" data-subtab="qna" onclick="switchSubtab('qna')">상품 Q&amp;A</button>
-  <button class="subtab" data-subtab="review" onclick="switchSubtab('review')">상품 리뷰</button>
-</div>
-
-<!-- TAB-SPECIFIC STATUS FILTERS -->
-<div class="filterbar" id="qnaStatusBar">
-  <div class="filter-chips" id="qnaStatusFilter">
-    <button class="filter-chip active" data-status="all">전체</button>
-    <button class="filter-chip" data-status="pending">미답변</button>
-    <button class="filter-chip" data-status="replied">답변완료</button>
+  <div class="subtab-group">
+    <button class="subtab active" data-subtab="qna" onclick="switchSubtab('qna')">상품 Q&amp;A</button>
+    <button class="subtab" data-subtab="review" onclick="switchSubtab('review')">상품 리뷰</button>
   </div>
-  <div class="filter-right">
-    <span class="filter-count" id="qnaFilterCount">총 <span>0</span>건</span>
-  </div>
-</div>
-<div class="filterbar" id="reviewStatusBar" style="display:none">
-  <div class="filter-chips" id="reviewStatusFilter">
-    <button class="filter-chip active" data-status="all">전체</button>
-    <button class="filter-chip" data-status="pending">미답변</button>
-    <button class="filter-chip" data-status="replied">답변완료</button>
-  </div>
-  <div class="filter-right">
-    <span class="filter-count" id="reviewFilterCount">총 <span>0</span>건</span>
+  <div class="subtab-filter-group">
+    <div class="filter-chips" id="statusFilter">
+      <button class="filter-chip active" data-status="all">전체</button>
+      <button class="filter-chip" data-status="pending">미답변</button>
+      <button class="filter-chip" data-status="replied">답변완료</button>
+    </div>
+    <span class="filter-count" id="filterCount">총 <span>0</span>건</span>
   </div>
 </div>
 
@@ -900,20 +902,15 @@ function filterByChannel(ch) {
 // FILTER BINDINGS
 // ─────────────────────────────────────────────
 function bindFilters() {
-  document.getElementById('qnaStatusFilter').addEventListener('click', e => {
+  document.getElementById('statusFilter').addEventListener('click', e => {
     const btn = e.target.closest('.filter-chip');
     if (!btn) return;
-    qnaStatus = btn.dataset.status;
-    document.querySelectorAll('#qnaStatusFilter .filter-chip').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderTable();
-  });
-
-  document.getElementById('reviewStatusFilter').addEventListener('click', e => {
-    const btn = e.target.closest('.filter-chip');
-    if (!btn) return;
-    reviewStatus = btn.dataset.status;
-    document.querySelectorAll('#reviewStatusFilter .filter-chip').forEach(b => b.classList.remove('active'));
+    if (activeSubtab === 'qna') {
+      qnaStatus = btn.dataset.status;
+    } else {
+      reviewStatus = btn.dataset.status;
+    }
+    document.querySelectorAll('#statusFilter .filter-chip').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderTable();
   });
@@ -940,8 +937,7 @@ function renderTable() {
   const tbody = document.getElementById('inboxBody');
   const emptyNote = document.getElementById('emptyNote');
   const reviewNotice = document.getElementById('reviewNotice');
-  const countId = activeSubtab === 'qna' ? 'qnaFilterCount' : 'reviewFilterCount';
-  const filterCount = document.getElementById(countId).querySelector('span');
+  const filterCount = document.getElementById('filterCount').querySelector('span');
 
   // 리뷰 탭 안내문 표시 여부
   reviewNotice.style.display = activeSubtab === 'review' ? 'block' : 'none';
@@ -1111,8 +1107,11 @@ function switchSubtab(tab) {
   document.querySelectorAll('.subtab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.subtab === tab);
   });
-  document.getElementById('qnaStatusBar').style.display = tab === 'qna' ? 'flex' : 'none';
-  document.getElementById('reviewStatusBar').style.display = tab === 'review' ? 'flex' : 'none';
+  // 탭 전환 시 해당 탭의 현재 상태 필터를 필터 버튼에 반영
+  const currentStatus = tab === 'qna' ? qnaStatus : reviewStatus;
+  document.querySelectorAll('#statusFilter .filter-chip').forEach(b => {
+    b.classList.toggle('active', b.dataset.status === currentStatus);
+  });
   renderTable();
 }
 
