@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoulKit - CS 통합관리</title>
+<style>
+  :root {
+    --bg-page: #14120f;
+    --bg-panel: #1d1a15;
+    --bg-card: #1d1a15;
+    --bg-surface: #242019;
+    --border: #322c22;
+    --text-main: #f2ede2;
+    --text-sub: #8f8879;
+    --accent: #f5e6c8;
+    --accent-strong: #d4c199;
+    --accent-text: #14120f;
+    --urgent: #e2725b;
+    --ok: #7a9b76;
+    --review-badge: #7c93b0;
+    --mid: #9b8cf0;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100vh; overflow: hidden; margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar h1 { font-size: 15px; margin: 0; letter-spacing: .02em; }
+  .topbar .badge {
+    font-size: 11px;
+    color: var(--text-sub);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+  }
+  .topbar .badge.urgent { color: var(--urgent); border-color: var(--urgent); }
+
+  /* ── CHANNEL SUMMARY CARDS ── */
+  .channel-cards {
+    display: flex;
+    gap: 10px;
+    padding: 14px 24px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    overflow-x: auto;
+  }
+  .channel-cards::-webkit-scrollbar { height: 4px; }
+  .channel-cards::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .ch-card {
+    flex-shrink: 0;
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 130px;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .ch-card:hover, .ch-card.active { border-color: var(--accent-strong); }
+  .ch-card.active { background: #242019; }
+  .ch-name {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ch-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ch-stats { display: flex; flex-direction: column; gap: 4px; }
+  .ch-stat-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .ch-stat-label { font-size: 10px; color: var(--text-sub); white-space: nowrap; }
+  .ch-count {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--urgent);
+    line-height: 1;
+  }
+  .ch-count.zero { color: var(--ok); font-size: 16px; }
+  .ch-review-row {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .review-badge {
+    font-size: 10px;
+    color: var(--review-badge);
+    background: rgba(124,147,176,0.12);
+    border: 1px solid rgba(124,147,176,0.3);
+    border-radius: 8px;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+  .review-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--review-badge);
+  }
+  .review-collect-only {
+    font-size: 10px;
+    color: var(--text-sub);
+    font-style: italic;
+  }
+
+  /* ── FILTERBAR ── */
+  .filterbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 24px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-chip {
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-page);
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .filter-chip:hover { border-color: var(--accent-strong); color: var(--text-main); }
+  .filter-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+  }
+  .filter-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .filter-right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  .filter-count {
+    font-size: 11px;
+    color: var(--text-sub);
+  }
+  .filter-count span { color: var(--accent-strong); font-weight: 600; }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px;
+  }
+  .table-wrap::-webkit-scrollbar { width: 6px; }
+  .table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  thead th {
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 10px;
+    color: var(--text-sub);
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: default;
+    transition: background .1s;
+  }
+  tbody tr:hover { background: var(--bg-surface); }
+  tbody td { padding: 10px 10px; vertical-align: middle; }
+  td.td-channel { white-space: nowrap; }
+  td.td-preview {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-sub);
+  }
+  td.td-product {
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  td.td-date { white-space: nowrap; color: var(--text-sub); font-size: 11px; }
+  td.td-action { text-align: right; white-space: nowrap; }
+
+  /* channel pill */
+  .ch-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    border-radius: 8px;
+    padding: 2px 7px;
+    border: 1px solid;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  /* type badge */
+  .type-badge {
+    display: inline-block;
+    font-size: 10px;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-weight: 500;
+  }
+  .type-badge.qna { background: rgba(155,140,240,0.15); color: var(--mid); border: 1px solid rgba(155,140,240,0.3); }
+  .type-badge.review { background: rgba(124,147,176,0.12); color: var(--review-badge); border: 1px solid rgba(124,147,176,0.3); }
+  .type-badge.cs { background: rgba(226,114,91,0.12); color: var(--urgent); border: 1px solid rgba(226,114,91,0.3); }
+
+  /* status badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    border-radius: 8px;
+    padding: 3px 8px;
+    font-weight: 600;
+  }
+  .status-badge.urgent {
+    background: rgba(226,114,91,0.12);
+    color: var(--urgent);
+    border: 1px solid rgba(226,114,91,0.3);
+  }
+  .status-badge.ok {
+    background: rgba(122,155,118,0.12);
+    color: var(--ok);
+    border: 1px solid rgba(122,155,118,0.3);
+  }
+  .status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  /* action buttons */
+  .btn { border: none; border-radius: 7px; padding: 6px 12px; font-size: 11px; cursor: pointer; font-weight: 600; }
+  .btn-reply {
+    background: var(--accent);
+    color: var(--accent-text);
+  }
+  .btn-reply:hover { background: var(--accent-strong); }
+  .btn-market {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-sub);
+  }
+  .btn-market:hover { border-color: var(--accent-strong); color: var(--text-main); }
+  .btn-done {
+    background: transparent;
+    border: 1px solid var(--ok);
+    color: var(--ok);
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: default;
+  }
+
+  /* empty state */
+  .empty-note {
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 12px;
+    padding: 60px 0;
+  }
+
+  /* ── FOOTER NOTICE ── */
+  .footer-notice {
+    padding: 10px 24px;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .footer-notice p {
+    margin: 0;
+    font-size: 10px;
+    color: var(--text-sub);
+    line-height: 1.7;
+  }
+  .footer-notice strong { color: var(--text-main); }
+
+  /* ── RIGHT SLIDE PANEL ── */
+  .slide-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 100;
+    display: none;
+  }
+  .slide-overlay.open { display: block; }
+  .slide-panel {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 480px;
+    max-width: 95vw;
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border);
+    z-index: 101;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform .25s ease;
+  }
+  .slide-panel.open { transform: translateX(0); }
+  .panel-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .panel-header-info { flex: 1; min-width: 0; }
+  .panel-title { font-size: 14px; font-weight: 700; margin: 0 0 4px; }
+  .panel-meta { font-size: 11px; color: var(--text-sub); display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-close {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-sub);
+    border-radius: 7px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .btn-close:hover { border-color: var(--urgent); color: var(--urgent); }
+  .panel-body { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .panel-body::-webkit-scrollbar { width: 4px; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .section-label { font-size: 10px; color: var(--text-sub); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 6px; }
+  .original-box {
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-main);
+    white-space: pre-wrap;
+  }
+  .product-info-box {
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: var(--text-sub);
+  }
+  .product-info-box strong { color: var(--text-main); font-size: 12px; }
+  .reply-area {
+    width: 100%;
+    background: var(--bg-page);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    line-height: 1.7;
+    resize: vertical;
+    min-height: 120px;
+    outline: none;
+    font-family: inherit;
+  }
+  .reply-area:focus { border-color: var(--accent-strong); }
+  .panel-actions {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .btn-ai-draft {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--accent-strong);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-ai-draft:hover { border-color: var(--accent-strong); background: #2a2620; }
+  .btn-ai-draft.loading { opacity: .7; cursor: wait; }
+  .btn-submit-reply {
+    flex: 1;
+    background: var(--accent);
+    color: var(--accent-text);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-submit-reply:hover { background: var(--accent-strong); }
+  .btn-submit-reply:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: var(--accent-text);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* channel color map */
+  .ch-naver { color: #4CB04C; border-color: rgba(76,176,76,0.4); background: rgba(76,176,76,0.08); }
+  .ch-coupang { color: #E8433C; border-color: rgba(232,67,60,0.4); background: rgba(232,67,60,0.08); }
+  .ch-11st { color: #FF5100; border-color: rgba(255,81,0,0.4); background: rgba(255,81,0,0.08); }
+  .ch-lotteon { color: #E50E3E; border-color: rgba(229,14,62,0.4); background: rgba(229,14,62,0.08); }
+  .ch-esm { color: #8B6FBE; border-color: rgba(139,111,190,0.4); background: rgba(139,111,190,0.08); }
+
+  .ch-dot-naver { background: #4CB04C; }
+  .ch-dot-coupang { background: #E8433C; }
+  .ch-dot-11st { background: #FF5100; }
+  .ch-dot-lotteon { background: #E50E3E; }
+  .ch-dot-esm { background: #8B6FBE; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>CS 통합관리</h1>
+    <span class="badge urgent" id="totalBadge">미답변 0건</span>
+  </div>
+  <span class="badge" style="font-size:10px; color:var(--text-sub)">Mock 데이터 · API 연동 예정</span>
+</div>
+
+<!-- CHANNEL SUMMARY CARDS -->
+<div class="channel-cards" id="channelCards">
+  <!-- JS로 렌더 -->
+</div>
+
+<!-- FILTERBAR -->
+<div class="filterbar">
+  <div class="filter-chips" id="channelFilter">
+    <button class="filter-chip active" data-channel="all">전체 채널</button>
+    <button class="filter-chip" data-channel="naver">네이버</button>
+    <button class="filter-chip" data-channel="coupang">쿠팡</button>
+    <button class="filter-chip" data-channel="11st">11번가</button>
+    <button class="filter-chip" data-channel="lotteon">롯데온</button>
+    <button class="filter-chip" data-channel="esm">지마켓·옥션</button>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-chips" id="statusFilter">
+    <button class="filter-chip active" data-status="all">전체</button>
+    <button class="filter-chip" data-status="pending">미답변</button>
+    <button class="filter-chip" data-status="replied">답변완료</button>
+  </div>
+  <div class="filter-right">
+    <span class="filter-count" id="filterCount">총 <span>0</span>건</span>
+  </div>
+</div>
+
+<!-- INBOX TABLE -->
+<div class="table-wrap">
+  <table id="inboxTable">
+    <thead>
+      <tr>
+        <th style="width:110px">채널</th>
+        <th style="width:72px">유형</th>
+        <th style="width:170px">상품명</th>
+        <th>내용 미리보기</th>
+        <th style="width:90px">등록일</th>
+        <th style="width:90px">상태</th>
+        <th style="width:110px; text-align:right">액션</th>
+      </tr>
+    </thead>
+    <tbody id="inboxBody">
+    </tbody>
+  </table>
+  <div class="empty-note" id="emptyNote" style="display:none">조건에 맞는 항목이 없습니다.</div>
+</div>
+
+<!-- FOOTER NOTICE -->
+<div class="footer-notice">
+  <p>
+    <strong>리뷰 조회 불가 채널 안내</strong> ·
+    네이버 스마트스토어 / 롯데온 / 지마켓·옥션(ESM)의 리뷰는 <strong>공식 API가 제공되지 않아</strong> 이 화면에서 조회 및 답변이 불가능합니다.
+    해당 채널 리뷰는 각 판매자센터에서 직접 확인해 주세요.
+    쿠팡 리뷰는 수집은 되나 API 답변 기능이 없어 "마켓에서 확인" 링크로만 제공됩니다.
+  </p>
+</div>
+
+<!-- SLIDE PANEL -->
+<div class="slide-overlay" id="slideOverlay" onclick="closePanel()"></div>
+<div class="slide-panel" id="slidePanel">
+  <div class="panel-header">
+    <div class="panel-header-info">
+      <p class="panel-title" id="panelTitle">문의 원문</p>
+      <div class="panel-meta" id="panelMeta"></div>
+    </div>
+    <button class="btn-close" onclick="closePanel()">✕ 닫기</button>
+  </div>
+  <div class="panel-body">
+    <div>
+      <div class="section-label">상품 정보</div>
+      <div class="product-info-box" id="panelProduct"></div>
+    </div>
+    <div>
+      <div class="section-label">원문 내용</div>
+      <div class="original-box" id="panelOriginal"></div>
+    </div>
+    <div>
+      <div class="section-label">답변 작성</div>
+      <textarea class="reply-area" id="replyTextarea" placeholder="답변 내용을 입력하거나 AI 답변 초안 생성 버튼을 눌러주세요."></textarea>
+    </div>
+  </div>
+  <div class="panel-actions">
+    <button class="btn-ai-draft" id="btnAiDraft" onclick="generateAiDraft()">
+      <span>✦</span> AI 답변 초안
+    </button>
+    <button class="btn-submit-reply" id="btnSubmitReply" onclick="submitReply()">답변 등록</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA STRUCTURES
+// 실제 API 연동 시 이 mock 데이터를 교체하세요.
+// channel: 'naver' | 'coupang' | '11st' | 'lotteon' | 'esm'
+// type: 'qna' | 'review' | 'cs'
+// status: 'pending' | 'replied'
+// canReply: true(API 답변 가능) | false(마켓에서 확인)
+// marketUrl: canReply=false 일 때 열릴 판매자센터 URL
+// ─────────────────────────────────────────────
+const INBOX_DATA = [
+  {
+    id: 'n001',
+    channel: 'naver',
+    type: 'qna',
+    product: '[에센셜 라인] 탄력 크림 50ml',
+    preview: '배송이 언제 오나요? 주문한 지 3일이 지났는데 아직 발송 전이에요.',
+    fullText: '안녕하세요, 배송이 언제 오나요?\n주문한 지 3일이 지났는데 아직 발송 전 상태입니다.\n내일까지 받을 수 있을까요? 급하게 필요해서요.',
+    date: '2026-07-25',
+    status: 'pending',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
+    id: 'n002',
+    channel: 'naver',
+    type: 'qna',
+    product: '[베이직] 히알루론산 세럼 30ml',
+    preview: '민감성 피부인데 사용 가능한가요? 알러지 성분이 있는지 궁금합니다.',
+    fullText: '안녕하세요!\n저는 민감성 피부인데 이 제품 사용해도 괜찮을까요?\n알러지 유발 성분이 있는지 궁금하고, 피부과 테스트 완료 제품인지도 알고 싶어요.',
+    date: '2026-07-25',
+    status: 'pending',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
+    id: 'c001',
+    channel: 'coupang',
+    type: 'qna',
+    product: '[썬케어] SPF50+ 선크림 60g',
+    preview: '로켓배송인데 오늘 주문하면 내일 받을 수 있나요?',
+    fullText: '안녕하세요, 로켓배송으로 되어 있는데 오늘 오후 1시에 주문하면 내일 받을 수 있나요? 내일 야외 행사가 있어서 꼭 필요합니다.',
+    date: '2026-07-26',
+    status: 'pending',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
+    id: 'c002',
+    channel: 'coupang',
+    type: 'review',
+    product: '[에센셜 라인] 탄력 크림 50ml',
+    preview: '발림성이 너무 좋아요. 근데 향이 조금 강한 것 같아서 아쉽네요. ★★★★',
+    fullText: '발림성이 너무 좋아요. 흡수도 빠르고 촉촉함이 오래 가서 만족합니다.\n근데 향이 조금 강한 것 같아서 아쉽네요. 무향 버전도 나왔으면 좋겠어요. ★★★★',
+    date: '2026-07-24',
+    status: 'pending',
+    canReply: false,
+    marketUrl: 'https://wing.coupang.com/seller/reviews',
+  },
+  {
+    id: 'c003',
+    channel: 'coupang',
+    type: 'review',
+    product: '[베이직] 히알루론산 세럼 30ml',
+    preview: '재구매 의사 있어요. 가성비 최고입니다. ★★★★★',
+    fullText: '재구매 의사 있어요. 가성비 최고입니다.\n피부가 확실히 촉촉해진 느낌이고, 자극도 없어서 민감성 피부에도 좋을 것 같아요. ★★★★★',
+    date: '2026-07-23',
+    status: 'pending',
+    canReply: false,
+    marketUrl: 'https://wing.coupang.com/seller/reviews',
+  },
+  {
+    id: 'e001',
+    channel: '11st',
+    type: 'qna',
+    product: '[프리미엄] 레티놀 나이트 크림 50ml',
+    preview: '레티놀 농도가 얼마나 되나요? 피부 자극이 걱정되는데요.',
+    fullText: '레티놀 농도가 얼마나 되나요?\n피부 자극이 걱정되는데, 초보자도 사용할 수 있는 낮은 농도인가요?\n적응 기간도 얼마나 걸리는지 알려주세요.',
+    date: '2026-07-25',
+    status: 'pending',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
+    id: 'e002',
+    channel: '11st',
+    type: 'review',
+    product: '[썬케어] SPF50+ 선크림 60g',
+    preview: '백탁 없이 발려서 좋아요! 리뷰: 매일 바르고 있어요. ★★★★★',
+    fullText: '백탁 없이 발려서 좋아요! 매일 바르고 있어요.\n기름기도 없고 보송보송한 마무리감이 마음에 들어요.\n자외선 차단력도 믿음직스럽고 재구매할 예정입니다. ★★★★★',
+    date: '2026-07-24',
+    status: 'pending',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
+    id: 'e003',
+    channel: '11st',
+    type: 'review',
+    product: '[에센셜 라인] 탄력 크림 50ml',
+    preview: '배송 빠르고 제품도 만족해요. 선물용으로 사기도 좋을 것 같아요. ★★★★',
+    fullText: '배송 빠르고 제품도 만족해요.\n선물용으로 사기도 좋을 것 같아요.\n포장도 깔끔하고 용량 대비 가격도 적당한 것 같습니다. ★★★★',
+    date: '2026-07-23',
+    status: 'pending',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
+    id: 'l001',
+    channel: 'lotteon',
+    type: 'qna',
+    product: '[프리미엄] 레티놀 나이트 크림 50ml',
+    preview: '유통기한이 얼마나 되나요? 장기 구매할 예정이라서요.',
+    fullText: '유통기한이 얼마나 되나요?\n여러 개 사두려고 하는데, 장기 보관해도 성분이 변하지 않는지 궁금합니다.\n냉장 보관해야 하나요?',
+    date: '2026-07-25',
+    status: 'pending',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
+    id: 'l002',
+    channel: 'lotteon',
+    type: 'qna',
+    product: '[베이직] 히알루론산 세럼 30ml',
+    preview: '쿠폰 중복 적용이 되나요? 이번 주 행사 중이던데 확인 부탁드립니다.',
+    fullText: '쿠폰 중복 적용이 되나요?\n지금 롯데온 할인 행사 중이던데, 추가 쿠폰도 함께 사용할 수 있는지 확인 부탁드립니다.',
+    date: '2026-07-24',
+    status: 'replied',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
+    id: 'm001',
+    channel: 'esm',
+    type: 'qna',
+    product: '[썬케어] SPF50+ 선크림 60g',
+    preview: '지마켓 옥션 동시 주문인데 각각 배송되나요? 합배송 가능한지요.',
+    fullText: '지마켓과 옥션에 각각 주문했는데 합배송이 가능한가요?\n배송비 두 번 내야 하는지 궁금합니다. 같은 셀러 상품이라서 여쭤봐요.',
+    date: '2026-07-26',
+    status: 'pending',
+    canReply: true,
+    marketUrl: null,
+  },
+  {
+    id: 'm002',
+    channel: 'esm',
+    type: 'qna',
+    product: '[에센셜 라인] 탄력 크림 50ml',
+    preview: '색상이 여러 개인가요? 사진 속 제품이 실물과 차이가 있는지 궁금해요.',
+    fullText: '색상이 여러 개인가요?\n상품 사진 속 제품이 실물과 많이 차이가 있는지 궁금해요.\n화이트와 핑크 두 가지로 보이는데, 차이점을 알려주세요.',
+    date: '2026-07-22',
+    status: 'replied',
+    canReply: true,
+    marketUrl: null,
+  },
+];
+
+// ─────────────────────────────────────────────
+// CHANNEL CONFIG
+// ─────────────────────────────────────────────
+const CHANNEL_CONFIG = {
+  naver:   { label: '네이버',      dotClass: 'ch-dot-naver',   pillClass: 'ch-naver',   hasReview: false },
+  coupang: { label: '쿠팡',        dotClass: 'ch-dot-coupang', pillClass: 'ch-coupang', hasReview: true, reviewMode: 'collect-only' },
+  '11st':  { label: '11번가',      dotClass: 'ch-dot-11st',    pillClass: 'ch-11st',    hasReview: true, reviewMode: 'full' },
+  lotteon: { label: '롯데온',      dotClass: 'ch-dot-lotteon', pillClass: 'ch-lotteon', hasReview: false },
+  esm:     { label: '지마켓·옥션', dotClass: 'ch-dot-esm',     pillClass: 'ch-esm',     hasReview: false },
+};
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let activeChannel = 'all';
+let activeStatus = 'all';
+let currentItemId = null;
+let inboxData = JSON.parse(JSON.stringify(INBOX_DATA)); // 로컬 상태 복사
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+function init() {
+  renderChannelCards();
+  bindFilters();
+  renderTable();
+}
+
+// ─────────────────────────────────────────────
+// CHANNEL CARDS
+// ─────────────────────────────────────────────
+function renderChannelCards() {
+  const container = document.getElementById('channelCards');
+  const channels = ['naver', 'coupang', '11st', 'lotteon', 'esm'];
+  let totalPending = 0;
+
+  const cardsHTML = channels.map(ch => {
+    const cfg = CHANNEL_CONFIG[ch];
+    const items = inboxData.filter(i => i.channel === ch);
+    const pending = items.filter(i => i.status === 'pending' && i.type === 'qna').length;
+    totalPending += pending;
+
+    let reviewHTML = '';
+    if (cfg.hasReview) {
+      if (cfg.reviewMode === 'full') {
+        const reviewCount = items.filter(i => i.type === 'review').length;
+        const reviewPending = items.filter(i => i.type === 'review' && i.status === 'pending').length;
+        reviewHTML = `
+          <div class="ch-review-row">
+            <span class="review-badge">리뷰</span>
+            <span class="review-count">${reviewCount}건</span>
+            <span style="font-size:10px; color:var(--text-sub)">(미답변 ${reviewPending})</span>
+          </div>`;
+      } else if (cfg.reviewMode === 'collect-only') {
+        const reviewCount = items.filter(i => i.type === 'review').length;
+        reviewHTML = `
+          <div class="ch-review-row">
+            <span class="review-badge">리뷰</span>
+            <span class="review-count">${reviewCount}건</span>
+            <span class="review-collect-only">수집만 가능</span>
+          </div>`;
+      }
+    }
+
+    return `
+      <div class="ch-card" data-channel="${ch}" onclick="filterByChannel('${ch}')">
+        <div class="ch-name">
+          <span class="ch-dot ${cfg.dotClass}"></span>
+          ${cfg.label}
+        </div>
+        <div class="ch-stats">
+          <div class="ch-stat-row">
+            <span class="ch-stat-label">미답변 문의</span>
+            <span class="ch-count${pending === 0 ? ' zero' : ''}">${pending}</span>
+          </div>
+        </div>
+        ${reviewHTML}
+      </div>`;
+  }).join('');
+
+  container.innerHTML = cardsHTML;
+
+  const totalBadge = document.getElementById('totalBadge');
+  totalBadge.textContent = `미답변 ${totalPending}건`;
+  totalBadge.className = 'badge' + (totalPending > 0 ? ' urgent' : '');
+}
+
+function filterByChannel(ch) {
+  activeChannel = ch;
+  document.querySelectorAll('#channelFilter .filter-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.channel === ch);
+  });
+  document.querySelectorAll('.ch-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.channel === ch);
+  });
+  renderTable();
+}
+
+// ─────────────────────────────────────────────
+// FILTER BINDINGS
+// ─────────────────────────────────────────────
+function bindFilters() {
+  document.getElementById('channelFilter').addEventListener('click', e => {
+    const btn = e.target.closest('.filter-chip');
+    if (!btn) return;
+    activeChannel = btn.dataset.channel;
+    document.querySelectorAll('#channelFilter .filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // sync ch-card active state
+    document.querySelectorAll('.ch-card').forEach(card => {
+      card.classList.toggle('active', card.dataset.channel === activeChannel);
+    });
+    renderTable();
+  });
+
+  document.getElementById('statusFilter').addEventListener('click', e => {
+    const btn = e.target.closest('.filter-chip');
+    if (!btn) return;
+    activeStatus = btn.dataset.status;
+    document.querySelectorAll('#statusFilter .filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable();
+  });
+}
+
+// ─────────────────────────────────────────────
+// TABLE RENDER
+// ─────────────────────────────────────────────
+function getFilteredData() {
+  return inboxData.filter(item => {
+    if (activeChannel !== 'all' && item.channel !== activeChannel) return false;
+    if (activeStatus === 'pending' && item.status !== 'pending') return false;
+    if (activeStatus === 'replied' && item.status !== 'replied') return false;
+    return true;
+  });
+}
+
+function renderTable() {
+  const data = getFilteredData();
+  const tbody = document.getElementById('inboxBody');
+  const emptyNote = document.getElementById('emptyNote');
+  const filterCount = document.getElementById('filterCount').querySelector('span');
+
+  filterCount.textContent = data.length;
+
+  if (data.length === 0) {
+    tbody.innerHTML = '';
+    emptyNote.style.display = 'block';
+    return;
+  }
+  emptyNote.style.display = 'none';
+
+  tbody.innerHTML = data.map(item => {
+    const cfg = CHANNEL_CONFIG[item.channel];
+
+    const chPill = `<span class="ch-pill ${cfg.pillClass}">
+      <span class="ch-dot ${cfg.dotClass}" style="width:5px;height:5px"></span>
+      ${cfg.label}
+    </span>`;
+
+    const typeLabel = { qna: '상품Q&A', review: '리뷰', cs: 'CS문의' }[item.type] || item.type;
+    const typeBadge = `<span class="type-badge ${item.type}">${typeLabel}</span>`;
+
+    const statusBadge = item.status === 'pending'
+      ? `<span class="status-badge urgent"><span class="status-dot"></span>미답변</span>`
+      : `<span class="status-badge ok"><span class="status-dot"></span>답변완료</span>`;
+
+    let actionBtn = '';
+    if (item.status === 'replied') {
+      actionBtn = `<span class="btn-done">✓ 완료</span>`;
+    } else if (item.canReply) {
+      actionBtn = `<button class="btn btn-reply" onclick="openPanel('${item.id}')">답변하기</button>`;
+    } else {
+      actionBtn = `<button class="btn btn-market" onclick="openMarket('${item.marketUrl}')">마켓에서 확인 ↗</button>`;
+    }
+
+    return `<tr>
+      <td class="td-channel">${chPill}</td>
+      <td>${typeBadge}</td>
+      <td class="td-product" title="${item.product}">${item.product}</td>
+      <td class="td-preview" title="${item.preview}">${item.preview}</td>
+      <td class="td-date">${item.date}</td>
+      <td>${statusBadge}</td>
+      <td class="td-action">${actionBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// SLIDE PANEL
+// ─────────────────────────────────────────────
+function openPanel(itemId) {
+  const item = inboxData.find(i => i.id === itemId);
+  if (!item) return;
+  currentItemId = itemId;
+
+  const cfg = CHANNEL_CONFIG[item.channel];
+  const typeLabel = { qna: '상품Q&A', review: '리뷰', cs: 'CS문의' }[item.type] || item.type;
+
+  document.getElementById('panelTitle').textContent = typeLabel + ' 원문';
+  document.getElementById('panelMeta').innerHTML = `
+    <span class="ch-pill ${cfg.pillClass}" style="font-size:10px">${cfg.label}</span>
+    <span>${item.date}</span>
+    <span>${item.status === 'pending' ? '⚠ 미답변' : '✓ 답변완료'}</span>
+  `;
+  document.getElementById('panelProduct').innerHTML = `<strong>${item.product}</strong>`;
+  document.getElementById('panelOriginal').textContent = item.fullText || item.preview;
+  document.getElementById('replyTextarea').value = '';
+
+  document.getElementById('slideOverlay').classList.add('open');
+  document.getElementById('slidePanel').classList.add('open');
+}
+
+function closePanel() {
+  currentItemId = null;
+  document.getElementById('slideOverlay').classList.remove('open');
+  document.getElementById('slidePanel').classList.remove('open');
+}
+
+function openMarket(url) {
+  if (url) window.open(url, '_blank');
+}
+
+// ─────────────────────────────────────────────
+// AI DRAFT (MOCK)
+// 실제 연동 시 n8n 웹훅 또는 Claude API 호출로 교체
+// ─────────────────────────────────────────────
+const AI_DRAFT_TEMPLATES = {
+  qna_shipping: '안녕하세요, 고객님! 문의주셔서 감사합니다 😊\n주문하신 상품은 영업일 기준 1~2일 내 출고되며, 출고 후 1~2일 내 수령 가능합니다.\n현재 주문 건은 오늘 중 출고 처리 예정입니다. 조금만 기다려 주시면 빠르게 받아보실 수 있습니다!\n궁금하신 점이 더 있으시면 언제든지 문의해 주세요 🙏',
+  qna_sensitive: '안녕하세요, 고객님! 문의주셔서 감사합니다.\n해당 제품은 피부과 테스트 완료 제품으로, 민감성 피부에도 순하게 사용하실 수 있습니다.\n자극 유발 향료, 알코올, 인공색소를 사용하지 않아 예민한 피부도 편안하게 사용 가능합니다.\n다만, 개인 피부 상태에 따라 반응이 다를 수 있으니 처음 사용 시 소량으로 패치 테스트를 권장드립니다. 감사합니다 😊',
+  review_positive: '안녕하세요, 고객님! 소중한 리뷰 남겨주셔서 진심으로 감사드립니다 🙏\n마음에 들어 주셔서 저희도 정말 기쁩니다! 소중한 피드백은 더 좋은 제품을 만드는 데 큰 힘이 됩니다.\n앞으로도 꾸준히 좋은 제품으로 보답하겠습니다. 감사합니다 😊',
+  qna_default: '안녕하세요, 고객님! 문의주셔서 감사합니다.\n남겨주신 문의를 확인했습니다. 빠른 시일 내에 상세히 답변 드리겠습니다.\n추가로 궁금하신 점이 있으시면 편하게 문의해 주세요. 감사합니다 🙏',
+};
+
+function generateAiDraft() {
+  const item = inboxData.find(i => i.id === currentItemId);
+  if (!item) return;
+
+  const btn = document.getElementById('btnAiDraft');
+  btn.classList.add('loading');
+  btn.textContent = '생성 중...';
+
+  setTimeout(() => {
+    let draft = AI_DRAFT_TEMPLATES.qna_default;
+    const text = (item.fullText || item.preview).toLowerCase();
+    if (item.type === 'review') {
+      draft = AI_DRAFT_TEMPLATES.review_positive;
+    } else if (text.includes('배송') || text.includes('발송') || text.includes('내일')) {
+      draft = AI_DRAFT_TEMPLATES.qna_shipping;
+    } else if (text.includes('민감') || text.includes('알러지') || text.includes('피부')) {
+      draft = AI_DRAFT_TEMPLATES.qna_sensitive;
+    }
+
+    document.getElementById('replyTextarea').value = draft;
+    btn.classList.remove('loading');
+    btn.innerHTML = '<span>✦</span> AI 답변 초안';
+    showToast('AI 답변 초안이 생성되었습니다.');
+  }, 900);
+}
+
+// ─────────────────────────────────────────────
+// SUBMIT REPLY (MOCK)
+// 실제 연동 시 n8n 웹훅 POST로 교체
+// ─────────────────────────────────────────────
+function submitReply() {
+  const reply = document.getElementById('replyTextarea').value.trim();
+  if (!reply) {
+    showToast('답변 내용을 입력해 주세요.');
+    return;
+  }
+
+  const btn = document.getElementById('btnSubmitReply');
+  btn.disabled = true;
+  btn.textContent = '등록 중...';
+
+  // mock API call
+  setTimeout(() => {
+    const idx = inboxData.findIndex(i => i.id === currentItemId);
+    if (idx !== -1) {
+      inboxData[idx].status = 'replied';
+    }
+    closePanel();
+    renderChannelCards();
+    renderTable();
+    btn.disabled = false;
+    btn.textContent = '답변 등록';
+    showToast('답변이 등록되었습니다! (Mock)');
+  }, 700);
+}
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ─────────────────────────────────────────────
+// START
+// ─────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
