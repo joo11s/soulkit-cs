@@ -579,7 +579,6 @@
   <div style="display:flex;align-items:center;gap:8px">
     <select class="business-select" id="businessFilter" onchange="onBusinessChange(this.value)">
       <option value="all">전체</option>
-      <option value="소울스토어">소울스토어</option>
       <option value="제이원투몰">제이원투몰</option>
       <option value="행복산업">행복산업</option>
     </select>
@@ -686,19 +685,6 @@
 // ─────────────────────────────────────────────
 const INBOX_DATA = [
   {
-    id: 'n001',
-    channel: 'naver',
-    type: 'qna',
-    business: '소울스토어',
-    product: '[에센셜 라인] 탄력 크림 50ml',
-    preview: '배송이 언제 오나요? 주문한 지 3일이 지났는데 아직 발송 전이에요.',
-    fullText: '안녕하세요, 배송이 언제 오나요?\n주문한 지 3일이 지났는데 아직 발송 전 상태입니다.\n내일까지 받을 수 있을까요? 급하게 필요해서요.',
-    date: '2026-07-25',
-    status: 'pending',
-    canReply: true,
-    marketUrl: null,
-  },
-  {
     id: 'n002',
     channel: 'naver',
     type: 'qna',
@@ -712,19 +698,6 @@ const INBOX_DATA = [
     marketUrl: null,
   },
   {
-    id: 'c001',
-    channel: 'coupang',
-    type: 'qna',
-    business: '소울스토어',
-    product: '[썬케어] SPF50+ 선크림 60g',
-    preview: '로켓배송인데 오늘 주문하면 내일 받을 수 있나요?',
-    fullText: '안녕하세요, 로켓배송으로 되어 있는데 오늘 오후 1시에 주문하면 내일 받을 수 있나요? 내일 야외 행사가 있어서 꼭 필요합니다.',
-    date: '2026-07-26',
-    status: 'pending',
-    canReply: true,
-    marketUrl: null,
-  },
-  {
     id: 'c002',
     channel: 'coupang',
     type: 'review',
@@ -733,19 +706,6 @@ const INBOX_DATA = [
     preview: '발림성이 너무 좋아요. 근데 향이 조금 강한 것 같아서 아쉽네요. ★★★★',
     fullText: '발림성이 너무 좋아요. 흡수도 빠르고 촉촉함이 오래 가서 만족합니다.\n근데 향이 조금 강한 것 같아서 아쉽네요. 무향 버전도 나왔으면 좋겠어요. ★★★★',
     date: '2026-07-24',
-    status: 'pending',
-    canReply: false,
-    marketUrl: 'https://wing.coupang.com/seller/reviews',
-  },
-  {
-    id: 'c003',
-    channel: 'coupang',
-    type: 'review',
-    business: '소울스토어',
-    product: '[베이직] 히알루론산 세럼 30ml',
-    preview: '재구매 의사 있어요. 가성비 최고입니다. ★★★★★',
-    fullText: '재구매 의사 있어요. 가성비 최고입니다.\n피부가 확실히 촉촉해진 느낌이고, 자극도 없어서 민감성 피부에도 좋을 것 같아요. ★★★★★',
-    date: '2026-07-23',
     status: 'pending',
     canReply: false,
     marketUrl: 'https://wing.coupang.com/seller/reviews',
@@ -777,19 +737,6 @@ const INBOX_DATA = [
     marketUrl: null,
   },
   {
-    id: 'e002',
-    channel: '11st',
-    type: 'review',
-    business: '소울스토어',
-    product: '[썬케어] SPF50+ 선크림 60g',
-    preview: '백탁 없이 발려서 좋아요! 리뷰: 매일 바르고 있어요. ★★★★★',
-    fullText: '백탁 없이 발려서 좋아요! 매일 바르고 있어요.\n기름기도 없고 보송보송한 마무리감이 마음에 들어요.\n자외선 차단력도 믿음직스럽고 재구매할 예정입니다. ★★★★★',
-    date: '2026-07-24',
-    status: 'pending',
-    canReply: false,
-    marketUrl: 'https://soffice.11st.co.kr/product/SellerProductReviewList.tmall',
-  },
-  {
     id: 'e003',
     channel: '11st',
     type: 'review',
@@ -812,19 +759,6 @@ const INBOX_DATA = [
     fullText: '유통기한이 얼마나 되나요?\n여러 개 사두려고 하는데, 장기 보관해도 성분이 변하지 않는지 궁금합니다.\n냉장 보관해야 하나요?',
     date: '2026-07-25',
     status: 'pending',
-    canReply: true,
-    marketUrl: null,
-  },
-  {
-    id: 'l002',
-    channel: 'lotteon',
-    type: 'qna',
-    business: '소울스토어',
-    product: '[베이직] 히알루론산 세럼 30ml',
-    preview: '쿠폰 중복 적용이 되나요? 이번 주 행사 중이던데 확인 부탁드립니다.',
-    fullText: '쿠폰 중복 적용이 되나요?\n지금 롯데온 할인 행사 중이던데, 추가 쿠폰도 함께 사용할 수 있는지 확인 부탁드립니다.',
-    date: '2026-07-24',
-    status: 'replied',
     canReply: true,
     marketUrl: null,
   },
@@ -871,7 +805,7 @@ const CHANNEL_CONFIG = {
 // STATE
 // ─────────────────────────────────────────────
 let activeChannel = 'all';
-let activeBusiness = 'all'; // '전체' | '소울스토어' | '제이원투몰' | '행복산업'
+let activeBusiness = 'all'; // 'all' | '제이원투몰' | '행복산업'
 let qnaStatus = 'all';
 let reviewStatus = 'all';
 let activeSubtab = 'qna'; // 'qna' | 'review'
